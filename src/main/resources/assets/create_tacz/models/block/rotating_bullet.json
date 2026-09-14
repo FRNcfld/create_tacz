@@ -1,0 +1,208 @@
+{
+	"credit": "Create TaCZ - rotating cartridge display assembly",
+	"parent": "block/block",
+	"ambientocclusion": false,
+	"textures": {
+		"bullet": "create_tacz:block/bullet",
+		"axis": "create:block/axis",
+		"axis_top": "create:block/axis_top",
+		"particle": "create_tacz:block/bullet"
+	},
+	"elements": [
+		{
+			"name": "shaft",
+			"from": [6, 0, 6],
+			"to": [10, 1, 10],
+			"faces": {
+				"north": {"uv": [6, 0, 10, 2], "texture": "#axis"},
+				"east": {"uv": [6, 0, 10, 2], "texture": "#axis"},
+				"south": {"uv": [6, 0, 10, 2], "texture": "#axis"},
+				"west": {"uv": [6, 0, 10, 2], "texture": "#axis"},
+				"up": {"uv": [6, 6, 10, 10], "texture": "#axis_top"},
+				"down": {"uv": [6, 6, 10, 10], "texture": "#axis_top"}
+			}
+		},
+		{
+			"name": "carrier",
+			"from": [5.6, 1, 5.6],
+			"to": [10.4, 1.7, 10.4],
+			"faces": {
+				"north": {"uv": [8, 10.5, 14, 11.5], "texture": "#bullet"},
+				"east": {"uv": [8, 10.5, 14, 11.5], "texture": "#bullet"},
+				"south": {"uv": [8, 10.5, 14, 11.5], "texture": "#bullet"},
+				"west": {"uv": [8, 10.5, 14, 11.5], "texture": "#bullet"},
+				"up": {"uv": [8, 4, 14, 10], "texture": "#bullet"},
+				"down": {"uv": [8, 4, 14, 10], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "rim",
+			"from": [6.85, 1.7, 6.85],
+			"to": [9.15, 2, 9.15],
+			"faces": {
+				"north": {"uv": [4, 0, 7.5, 0.5], "texture": "#bullet"},
+				"east": {"uv": [4, 0, 7.5, 0.5], "texture": "#bullet"},
+				"south": {"uv": [4, 0, 7.5, 0.5], "texture": "#bullet"},
+				"west": {"uv": [4, 0, 7.5, 0.5], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "extractor_groove",
+			"from": [7.05, 2, 7.05],
+			"to": [8.95, 2.3, 8.95],
+			"faces": {
+				"north": {"uv": [4, 0.5, 7, 1], "texture": "#bullet"},
+				"east": {"uv": [4, 0.5, 7, 1], "texture": "#bullet"},
+				"south": {"uv": [4, 0.5, 7, 1], "texture": "#bullet"},
+				"west": {"uv": [4, 0.5, 7, 1], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "belt",
+			"from": [6.825, 2.3, 6.825],
+			"to": [9.175, 2.65, 9.175],
+			"faces": {
+				"north": {"uv": [4, 1, 7.5, 1.5], "texture": "#bullet"},
+				"east": {"uv": [4, 1, 7.5, 1.5], "texture": "#bullet"},
+				"south": {"uv": [4, 1, 7.5, 1.5], "texture": "#bullet"},
+				"west": {"uv": [4, 1, 7.5, 1.5], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "case_body",
+			"from": [6.9, 2.65, 6.9],
+			"to": [9.1, 9.6, 9.1],
+			"faces": {
+				"north": {"uv": [0, 0, 3.5, 10.5], "texture": "#bullet"},
+				"east": {"uv": [0, 0, 3.5, 10.5], "texture": "#bullet"},
+				"south": {"uv": [0, 0, 3.5, 10.5], "texture": "#bullet"},
+				"west": {"uv": [0, 0, 3.5, 10.5], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "shoulder_1",
+			"from": [7.025, 9.6, 7.025],
+			"to": [8.975, 10.05, 8.975],
+			"faces": {
+				"north": {"uv": [4, 1.5, 7, 2], "texture": "#bullet"},
+				"east": {"uv": [4, 1.5, 7, 2], "texture": "#bullet"},
+				"south": {"uv": [4, 1.5, 7, 2], "texture": "#bullet"},
+				"west": {"uv": [4, 1.5, 7, 2], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "shoulder_2",
+			"from": [7.16, 10.05, 7.16],
+			"to": [8.84, 10.5, 8.84],
+			"faces": {
+				"north": {"uv": [4, 2, 6.5, 2.5], "texture": "#bullet"},
+				"east": {"uv": [4, 2, 6.5, 2.5], "texture": "#bullet"},
+				"south": {"uv": [4, 2, 6.5, 2.5], "texture": "#bullet"},
+				"west": {"uv": [4, 2, 6.5, 2.5], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "neck",
+			"from": [7.25, 10.5, 7.25],
+			"to": [8.75, 11.25, 8.75],
+			"faces": {
+				"north": {"uv": [4, 2.5, 6.5, 3.5], "texture": "#bullet"},
+				"east": {"uv": [4, 2.5, 6.5, 3.5], "texture": "#bullet"},
+				"south": {"uv": [4, 2.5, 6.5, 3.5], "texture": "#bullet"},
+				"west": {"uv": [4, 2.5, 6.5, 3.5], "texture": "#bullet"},
+				"up": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"},
+				"down": {"uv": [8, 0, 11.5, 3.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "ogive_1",
+			"from": [7.26, 11.25, 7.26],
+			"to": [8.74, 12.05, 8.74],
+			"faces": {
+				"north": {"uv": [4, 3.5, 6, 4.5], "texture": "#bullet"},
+				"east": {"uv": [4, 3.5, 6, 4.5], "texture": "#bullet"},
+				"south": {"uv": [4, 3.5, 6, 4.5], "texture": "#bullet"},
+				"west": {"uv": [4, 3.5, 6, 4.5], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "ogive_2",
+			"from": [7.33, 12.05, 7.33],
+			"to": [8.67, 12.75, 8.67],
+			"faces": {
+				"north": {"uv": [4, 4.5, 6, 5.5], "texture": "#bullet"},
+				"east": {"uv": [4, 4.5, 6, 5.5], "texture": "#bullet"},
+				"south": {"uv": [4, 4.5, 6, 5.5], "texture": "#bullet"},
+				"west": {"uv": [4, 4.5, 6, 5.5], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "ogive_3",
+			"from": [7.43, 12.75, 7.43],
+			"to": [8.57, 13.35, 8.57],
+			"faces": {
+				"north": {"uv": [4, 5.5, 5.5, 6.5], "texture": "#bullet"},
+				"east": {"uv": [4, 5.5, 5.5, 6.5], "texture": "#bullet"},
+				"south": {"uv": [4, 5.5, 5.5, 6.5], "texture": "#bullet"},
+				"west": {"uv": [4, 5.5, 5.5, 6.5], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "ogive_4",
+			"from": [7.55, 13.35, 7.55],
+			"to": [8.45, 13.85, 8.45],
+			"faces": {
+				"north": {"uv": [4, 6.5, 5.5, 7], "texture": "#bullet"},
+				"east": {"uv": [4, 6.5, 5.5, 7], "texture": "#bullet"},
+				"south": {"uv": [4, 6.5, 5.5, 7], "texture": "#bullet"},
+				"west": {"uv": [4, 6.5, 5.5, 7], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "ogive_5",
+			"from": [7.69, 13.85, 7.69],
+			"to": [8.31, 14.2, 8.31],
+			"faces": {
+				"north": {"uv": [4, 7, 5, 7.5], "texture": "#bullet"},
+				"east": {"uv": [4, 7, 5, 7.5], "texture": "#bullet"},
+				"south": {"uv": [4, 7, 5, 7.5], "texture": "#bullet"},
+				"west": {"uv": [4, 7, 5, 7.5], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		},
+		{
+			"name": "tip",
+			"from": [7.82, 14.2, 7.82],
+			"to": [8.18, 14.45, 8.18],
+			"faces": {
+				"north": {"uv": [4, 7.5, 4.5, 8], "texture": "#bullet"},
+				"east": {"uv": [4, 7.5, 4.5, 8], "texture": "#bullet"},
+				"south": {"uv": [4, 7.5, 4.5, 8], "texture": "#bullet"},
+				"west": {"uv": [4, 7.5, 4.5, 8], "texture": "#bullet"},
+				"up": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"},
+				"down": {"uv": [12, 0, 14.5, 2.5], "texture": "#bullet"}
+			}
+		}
+	]
+}

@@ -5,6 +5,8 @@ import com.frnc.create_tacz.registry.ModBlockEntities;
 import com.frnc.create_tacz.registry.ModBlocks;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 
+import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
+
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -19,10 +21,31 @@ public class ClientSetup
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event)
     {
-        // 贴图带二值透明像素（玻璃部分是 alpha=0）。默认的 solid 渲染层会把它们
-        // 画成不透明的黑块，必须切到 cutout 才会真的挖空。
-        event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(
-                ModBlocks.MILITARY_FACTORY_BULLETS.get(), RenderType.cutout()));
+        // 关键顺序：PartialModel 必须在资源重载（模型烘焙）之前创建，
+        // 否则 Flywheel 取不到烘焙结果，会回落到 missing model ——
+        // 一个整格紫黑方块盖住整台机器。理由见 MilitaryFactoryVisual#init。
+        MilitaryFactoryVisual.init();
+
+        event.enqueueWork(() ->
+        {
+            // 贴图带二值透明像素（玻璃部分是 alpha=0）。默认的 solid 渲染层会把它们
+            // 画成不透明的黑块，必须切到 cutout 才会真的挖空。
+            ItemBlockRenderTypes.setRenderLayer(
+                    ModBlocks.MILITARY_FACTORY_BULLETS.get(), RenderType.cutout());
+
+            // 底部应力输入口的传动杆交给 Flywheel 画，它才会跟着转速转。
+            //
+            // neverSkipVanillaRender() 是关键：默认会跳过方块自身的模型渲染，
+            // 那是给「整个模型就是 visual」的方块（比如 Create 的传动杆）用的；
+            // 本机的机壳、齿轮、玻璃仍然是普通方块模型，visual 只额外加一根轴。
+            //
+            // 只能在客户端注册 —— MilitaryFactoryVisual 引用了 AllInstanceTypes
+            // 这类纯客户端类，放到公共代码里会在服务端加载时炸掉。
+            SimpleBlockEntityVisualizer.builder(ModBlockEntities.MILITARY_FACTORY_BULLETS.get())
+                    .factory(MilitaryFactoryVisual::new)
+                    .neverSkipVanillaRender()
+                    .apply();
+        });
     }
 
     /**

@@ -41,11 +41,3 @@ mandatory=true
 versionRange="${tacz_version_range}"
 ordering="NONE"
 side="BOTH"
-
-# JEI 仅用于配方查看，属于可选的软依赖，未安装时静默跳过。
-[[dependencies.create_tacz]]
-modId="jei"
-mandatory=false
-versionRange="[0,)"
-ordering="AFTER"
-side="BOTH"
