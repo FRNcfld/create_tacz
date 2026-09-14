@@ -22,6 +22,9 @@ public class ModBlocks
                     .mapColor(MapColor.METAL)
                     .strength(3.5F, 6.0F)
                     .sound(SoundType.METAL)
+                    // 模型带镂空玻璃，不能让相邻方块把朝向它的面剔除掉，
+                    // 否则透过玻璃会看到邻面的空洞。
+                    .noOcclusion()
                     // 掉落物需要「正确的工具」：配合 mineable/pickaxe 与 needs_iron_tool
                     // 两个方块标签，实际效果就是铁镐及以上才能挖出东西。
                     .requiresCorrectToolForDrops()));

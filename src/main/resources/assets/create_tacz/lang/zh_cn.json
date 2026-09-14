@@ -1,4 +1,5 @@
 {
   "itemGroup.create_tacz": "机械动力：TaCZ",
-  "block.create_tacz.military_factory_bullets": "军工厂：子弹"
+  "block.create_tacz.military_factory_bullets": "军工厂：子弹",
+  "gui.create_tacz.speed_too_low": "需要至少 %1$s RPM（当前 %2$s）"
 }

@@ -154,9 +154,14 @@ dependencies {
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation("io.github.llamalad7:mixinextras-forge:0.4.1")
 
-    // TaCZ（Timeless and Classics Zero）：发布的 jar 带有混淆，因此编译期使用其 sources 文件。
+    // TaCZ（Timeless and Classics Zero）
+    //
+    // 注意：TaCZ 的发布 jar 并【没有】混淆类名 —— 实测 tacz-1.20.1-1.1.8-hotfix.jar 里
+    // com/tacz 下 837 个类、短名（混淆特征）类 0 个。所以运行时可以直接引用它的类，
+    // 比如 GunSmithTableRecipe.getInputs()，不需要反射。（此注释原先写作"带有混淆"，是错的。）
+    //
     // 升级版本时到 https://www.curseforge.com/minecraft/mc-mods/timeless-and-classics-zero/files
-    // 取新的「主文件 ID」与「sources 文件 ID」，成对更新 gradle.properties 中的两个属性。
+    // 更新 gradle.properties 里的文件 ID。
     implementation fg.deobf("curse.maven:timeless-and-classics-zero-1028108:${tacz_curse_file_id}-sources-${tacz_curse_sources_id}")
 }
 

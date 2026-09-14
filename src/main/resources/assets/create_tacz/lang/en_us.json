@@ -1,4 +1,5 @@
 {
   "itemGroup.create_tacz": "Create TaCZ",
-  "block.create_tacz.military_factory_bullets": "Military Factory Bullets"
+  "block.create_tacz.military_factory_bullets": "Military Factory Bullets",
+  "gui.create_tacz.speed_too_low": "Needs at least %1$s RPM (currently %2$s)"
 }
