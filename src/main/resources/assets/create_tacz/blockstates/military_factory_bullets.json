@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "create_tacz:block/military_factory_bullets",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "create_tacz:block/military_factory_bullets"
+    },
+    "facing=south": {
+      "model": "create_tacz:block/military_factory_bullets",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "create_tacz:block/military_factory_bullets",
+      "y": 270
+    }
+  }
+}
