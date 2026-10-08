@@ -1,4 +1,6 @@
 {
   "block.create_tacz.military_factory_bullets": "Military Factory Bullets",
-  "create_tacz.gui.speed_too_low": "Needs at least %1$s RPM (currently %2$s)"
+  "create_tacz.gui.speed_too_low": "Needs at least %1$s RPM (currently %2$s)",
+  "subtitles.create_tacz.military_factory_running": "Military factory produces bullets",
+  "jei.create_tacz.military_factory_bullets": "Military Factory: Bullets"
 }

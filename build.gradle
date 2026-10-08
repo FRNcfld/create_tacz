@@ -116,12 +116,37 @@ repositories {
     maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
     maven { url = "https://maven.ithundxr.dev/mirror" } // Registrate
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
+
+    // JEI
+    maven {
+        // 2023 年 1 月之前 JEI 的发布位置
+        name = "Progwml6's maven"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+    maven {
+        // 2023 年 1 月之后 JEI 的发布位置
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        // 备用镜像
+        name = "ModMaven"
+        url = "https://modmaven.dev"
+    }
 }
 
 dependencies {
     // Specify the version of Minecraft to use.
     // The "userdev" classifier will be requested and setup by ForgeGradle.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // JEI（软依赖）：编译期只要 API，运行期用完整 jar。
+    //
+    // 之所以是软依赖：我们的 JEI 插件类只在 JEI 存在时才会被它扫描加载，
+    // 公共代码路径完全不引用 JEI，所以没装 JEI 时既不会找不到类、也不会报错。
+    compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
+    compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
+    runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
 
     // 机械动力：slim 包不内嵌依赖，Ponder / Flywheel / Registrate 需要一并声明
     implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false })

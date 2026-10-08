@@ -1,0 +1,12 @@
+{
+  "military_factory_running": {
+    "subtitle": "subtitles.create_tacz.military_factory_running",
+    "sounds": [
+      {
+        "comment": "这个音效永远以音量 0 播放，只为把上面的 subtitle 推给隐藏式字幕。type=event 直接引用原版音效事件，因此本模组不需要打包任何 .ogg 音频资源；换成自录音频时把下面这行改成 { \"name\": \"military_factory_running\" } 并放入 assets/create_tacz/sounds/ 即可。",
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  }
+}

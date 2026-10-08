@@ -41,3 +41,12 @@ mandatory=true
 versionRange="${tacz_version_range}"
 ordering="NONE"
 side="BOTH"
+
+# JEI 是软依赖：没装也能正常运行，装上则多出"军工厂：子弹"的配方分类。
+# ordering="AFTER" 让本模组在 JEI 之后加载，符合 JEI 联动模组的惯例。
+[[dependencies.create_tacz]]
+modId="jei"
+mandatory=false
+versionRange="[15,)"
+ordering="AFTER"
+side="BOTH"

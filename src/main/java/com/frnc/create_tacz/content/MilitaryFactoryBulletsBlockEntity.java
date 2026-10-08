@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.frnc.create_tacz.Config;
 import com.frnc.create_tacz.CreateTacz;
+import com.frnc.create_tacz.client.MilitaryFactorySounds;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
@@ -40,9 +41,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
@@ -94,19 +97,19 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     private static final int OUTPUT_SLOTS = 9;
 
     /**
-     * 玻璃罩里那发子弹的展示转速：4 RPM，约 15 秒一圈。
+     * 玻璃罩里那发子弹的展示转速上限：32 RPM。
      *
-     * <p>与加工无关 —— <b>转不转只看有没有动力，转多快跟动力大小无关</b>。
+     * <p>子弹<b>跟着输入转速 1:1 转</b>（16 RPM 进去就 16 RPM 转），但不越过这个上限 ——
+     * 否则网络一快子弹就糊成一片，反而看不出它在转。
      */
-    private static final float SPIN_RPM = 4.0f;
+    private static final float MAX_DISPLAY_RPM = 32.0f;
 
     /**
-     * 每游戏刻转过的角度。
+     * 把 RPM 折算成"每游戏刻转多少度"的系数。
      *
-     * <p>1 RPM = 6 度/秒，所以 4 RPM = 24 度/秒；一游戏刻是 1/20 秒，即 1.2 度/刻。
-     * 对着一发约 2.4 格宽的子弹，1.2 度只让边缘移动约 0.05 格，肉眼看不出是一格一格走的。
+     * <p>1 RPM = 6 度/秒，一游戏刻是 1/20 秒，所以 {@code 转速 × 这个系数 = 度/刻}。
      */
-    private static final float DEGREES_PER_TICK = SPIN_RPM * 6.0f / 20.0f;
+    private static final float DEGREES_PER_TICK_PER_RPM = 6.0f / 20.0f;
 
     private FilteringBehaviour filter;
 
@@ -136,6 +139,17 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
      * <p>启动时 {@code getProcessingTicks()} 保证返回值至少是 1，所以 0 不会被误当成"正在加工"。
      */
     private int timer;
+
+    /**
+     * 是否正在<b>真正加工</b> —— 字幕与子弹旋转都由它驱动。
+     *
+     * <p>口径是"真的在做东西"：转速达标、滤波槽已锁定配方、材料也抽得出来，
+     * 也就是计时器在跑。仅仅"通了电"不算，空转但没材料也不算。
+     *
+     * <p>这个值<b>要同步到客户端</b>（见 {@link #write} / {@link #read}），
+     * 因为字幕和旋转都是客户端侧的行为，服务端算不出来给客户端看。
+     */
+    private boolean working;
 
     /**
      * 展示用旋转角度（度），<b>仅客户端</b>，不写 NBT 也不同步。
@@ -206,6 +220,8 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     {
         super.write(tag, clientPacket);
         tag.put("OutputItems", outputInventory.serializeNBT());
+        // 两端都要：客户端的字幕与子弹旋转都靠它
+        tag.putBoolean("Working", working);
 
         // 暂存区只有服务端关心（客户端没有 GUI 也不需要它），省一点同步流量
         if (!clientPacket)
@@ -222,6 +238,7 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     {
         super.read(tag, clientPacket);
         outputInventory.deserializeNBT(tag.getCompound("OutputItems"));
+        working = tag.getBoolean("Working");
 
         if (!clientPacket)
         {
@@ -258,13 +275,20 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
         if (level == null)
             return;
 
-        // 展示角度只在客户端累计：它是纯视觉量。
-        // 累计必须在这里（每刻都会走的钩子），不能放到 visual 的 update() ——
-        // Flywheel 的 update() 只在视觉对象被创建或显式排队时调用，不是周期钩子。
         if (level.isClientSide())
         {
-            if (isDisplaySpinning())
-                renderAngle = (renderAngle + DEGREES_PER_TICK) % 360f;
+            // 展示角度只在客户端累计：它是纯视觉量。
+            // 累计必须在这里（每刻都会走的钩子），不能放到 visual 的 update() ——
+            // Flywheel 的 update() 只在视觉对象被创建或显式排队时调用，不是周期钩子。
+            if (working)
+                renderAngle = (renderAngle + getDisplayRpm() * DEGREES_PER_TICK_PER_RPM) % 360f;
+
+            // 隐藏式字幕：工作时周期性重播一个静音音效，把字幕一直挂住。
+            //
+            // 客户端专属类绝不能出现在服务端路径上，所以用 DistExecutor 守卫 ——
+            // 服务端不会求值这个 supplier，MilitaryFactorySounds 也就不会被加载。
+            // Create 自己也是这么处理 SoundScapes 的（见 KineticBlockEntity.tickAudio）。
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MilitaryFactorySounds.tick(this));
             return;
         }
 
@@ -293,6 +317,10 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
             return;
         }
 
+        // 走到这里说明这一 tick 确实有活可干 —— 转速达标、配方已锁定、材料也抽得出来。
+        // 这就是字面意义上的"正在工作"。
+        setWorking(true);
+
         if (timer == 0)
         {
             timer = getProcessingTicks(speed);
@@ -314,15 +342,34 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
         }
     }
 
-    /**
-     * 展示组当前是否应该旋转：接上传动杆、有转速、而且没过载。
-     *
-     * <p>判据用 {@code getSpeed() != 0} 而不是加工用的 {@link #MIN_SPEED}：
-     * 那 16 RPM 是"够不够加工"的门槛，而这里的子弹只是挂在这根输入轴上，轴转它就转。
-     */
-    public boolean isDisplaySpinning()
+    /** 机器是否正在真正加工。字幕与子弹旋转都看它。 */
+    public boolean isWorking()
     {
-        return getSpeed() != 0f && !isOverStressed();
+        return working;
+    }
+
+    private void setWorking(boolean value)
+    {
+        if (working == value)
+            return;
+
+        working = value;
+        sendData();
+    }
+
+    /**
+     * 展示转速（RPM）。跟着输入转速 1:1 走，上限 {@link #MAX_DISPLAY_RPM}；
+     * 不工作时为 0，子弹就停住。
+     *
+     * <p>过载时 {@code getSpeed()} 本身返回 0，而那时计时器也停了、{@code working} 为假，
+     * 所以"过载时不转"是天然成立的，不需要在这里额外判断。
+     */
+    private float getDisplayRpm()
+    {
+        if (!working)
+            return 0f;
+
+        return Math.min(Math.abs(getSpeed()), MAX_DISPLAY_RPM);
     }
 
     /** 展示角度（度）。visual 与渲染器回退共用这一个来源。 */
@@ -369,13 +416,20 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
         return false;
     }
 
+    /**
+     * 停机：清掉计时器与 working。
+     *
+     * <p>{@code working} 必须在这里一起清 —— 上面每一个提前返回的分支（暂存没吐完、
+     * 转速不够、没配方、材料抽不出来）都会走到这里，而它们同样意味着"不再工作了"。
+     */
     private void stopProcessing()
     {
-        if (timer != 0)
-        {
-            timer = 0;
+        boolean changed = timer != 0 || working;
+        timer = 0;
+        working = false;
+
+        if (changed)
             sendData();
-        }
     }
 
     /**

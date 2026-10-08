@@ -49,17 +49,25 @@ public class MilitaryFactoryRenderer extends SafeBlockEntityRenderer<MilitaryFac
         if (VisualizationManager.supportsVisualization(be.getLevel()))
             return;
 
-        // 回退路径：自己把旋转组画出来。
+        // 回退路径：自己把两个旋转件画出来。
         //
-        // 少了这一段，在 Flywheel 不生效的环境里（老显卡、关掉后端等）旋转组会整个消失 ——
-        // 机壳和玻璃还在，只有传动杆、卡盘和子弹不见了，而且不报任何错。
+        // 少了这一段，在 Flywheel 不生效的环境里（老显卡、关掉后端等）旋转件会整个消失 ——
+        // 机壳和玻璃还在，只有传动轴、卡盘和子弹不见了，而且不报任何错。
         //
         // 角度取自方块实体的 renderAngle，与 visual 用的是同一个来源，
         // 所以开关 Flywheel 看到的是同一种转速。
         // kineticRotationTransform 接受显式角度，并顺带处理了调试上色与过载红/绿着色。
-        SuperByteBuffer model = CachedBuffers.partial(ModPartialModels.ROTATING_BULLET, be.getBlockState());
-        KineticBlockEntityRenderer.kineticRotationTransform(
-                        model, be, Direction.Axis.Y, AngleHelper.rad(be.getRenderAngle()), light)
+        float angle = AngleHelper.rad(be.getRenderAngle());
+
+        // 传动轴轴头：从底面往上的一小截。
+        // 模型本身朝上建模，所以不需要 partialFacingVertical 之类的朝向修正。
+        SuperByteBuffer shaft = CachedBuffers.partial(ModPartialModels.SHAFT_STUB, be.getBlockState());
+        KineticBlockEntityRenderer.kineticRotationTransform(shaft, be, Direction.Axis.Y, angle, light)
+                .renderInto(ms, buffer.getBuffer(RenderType.solid()));
+
+        // 展示组：黄铜卡盘 + 子弹（本模组自己的局部模型）
+        SuperByteBuffer bullet = CachedBuffers.partial(ModPartialModels.ROTATING_BULLET, be.getBlockState());
+        KineticBlockEntityRenderer.kineticRotationTransform(bullet, be, Direction.Axis.Y, angle, light)
                 .renderInto(ms, buffer.getBuffer(RenderType.cutout()));
     }
 }

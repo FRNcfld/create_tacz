@@ -1,0 +1,24 @@
+{
+	"credit": "Create TaCZ - drive shaft stub, following Create's own powered_shaft bottom stub",
+	"parent": "block/block",
+	"textures": {
+		"axis": "create:block/axis",
+		"axis_top": "create:block/axis_top",
+		"particle": "create:block/axis"
+	},
+	"elements": [
+		{
+			"comment": "高度上限是 y1.7（弹壳上比轴窄的最低部件 rim 的下沿）—— 超过就会遮住弹壳；而 y1..1.7 又整个在更宽的黄铜卡盘内部。所以可见高度只有 y0..1，正好填满机壳底部那个 4x4 开口。没有 up 面：它顶在卡盘底面，是共面的（Create 的 powered_shaft 底部轴头同样省掉了 up）。",
+			"name": "shaft_stub",
+			"from": [6, 0, 6],
+			"to": [10, 1, 10],
+			"faces": {
+				"north": {"uv": [6, 0, 10, 1], "texture": "#axis"},
+				"east": {"uv": [6, 0, 10, 1], "rotation": 180, "texture": "#axis"},
+				"south": {"uv": [6, 0, 10, 1], "texture": "#axis"},
+				"west": {"uv": [6, 0, 10, 1], "texture": "#axis"},
+				"down": {"uv": [6, 6, 10, 10], "rotation": 180, "texture": "#axis_top"}
+			}
+		}
+	]
+}

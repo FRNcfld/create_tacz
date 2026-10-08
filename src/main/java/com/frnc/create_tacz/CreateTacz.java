@@ -2,6 +2,7 @@ package com.frnc.create_tacz;
 
 import com.frnc.create_tacz.registry.ModBlockEntities;
 import com.frnc.create_tacz.registry.ModBlocks;
+import com.frnc.create_tacz.registry.ModSounds;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -43,6 +44,10 @@ public class CreateTacz
         // 不主动触碰这些类，它们就永远不会初始化，方块与方块实体一个都不会注册。
         ModBlocks.register();
         ModBlockEntities.register();
+
+        // 音效走的是原生 DeferredRegister（Registrate 没有音效构建器），
+        // 所以要自己接上事件总线。
+        ModSounds.SOUNDS.register(modEventBus);
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
