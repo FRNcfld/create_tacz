@@ -2,5 +2,20 @@
   "block.create_tacz.military_factory_bullets": "Military Factory Bullets",
   "create_tacz.gui.speed_too_low": "Needs at least %1$s RPM (currently %2$s)",
   "subtitles.create_tacz.military_factory_running": "Military factory produces bullets",
-  "jei.create_tacz.military_factory_bullets": "Military Factory: Bullets"
+  "jei.create_tacz.military_factory_bullets": "Military Factory: Bullets",
+  "create_tacz.ponder.bullet_factory_1.header": "Making Ammunition by Hand",
+  "create_tacz.ponder.bullet_factory_1.text_1": "Ammunition can be crafted at the Ammo Assembly Table",
+  "create_tacz.ponder.bullet_factory_1.text_2": "But it cannot be hooked up to an automated production line",
+  "create_tacz.ponder.bullet_factory_1.text_3": "Ammunition can only be made by hand",
+  "create_tacz.ponder.bullet_factory_1.text_4": "Which is an extremely unhealthy practice",
+  "create_tacz.ponder.bullet_factory_2.header": "Making Ammunition Automatically",
+  "create_tacz.ponder.bullet_factory_2.text_1": "Supply stress to the Military Factory",
+  "create_tacz.ponder.bullet_factory_2.text_2": "Its speed must be at least 16 RPM",
+  "create_tacz.ponder.bullet_factory_2.text_3": "Insert a list filter",
+  "create_tacz.ponder.bullet_factory_2.text_4": "Put the ammunition you want to craft (only one type) into the list filter",
+  "create_tacz.ponder.bullet_factory_2.text_5": "Remember to set it to whitelist and to match item NBT",
+  "create_tacz.ponder.bullet_factory_2.text_6": "The Military Factory pulls ingredients from adjacent inventories",
+  "create_tacz.ponder.bullet_factory_2.text_7": "Crafting speed depends on rotation speed",
+  "create_tacz.ponder.bullet_factory_2.text_8": "At 256 RPM it produces one batch every 5 seconds",
+  "create_tacz.ponder.bullet_factory_2.text_9": "Finished ammunition can be taken out with funnels and other logistics"
 }

@@ -2,5 +2,20 @@
   "block.create_tacz.military_factory_bullets": "军工厂：子弹",
   "create_tacz.gui.speed_too_low": "需要至少 %1$s RPM（当前 %2$s）",
   "subtitles.create_tacz.military_factory_running": "军工厂：子弹制造",
-  "jei.create_tacz.military_factory_bullets": "军工厂：子弹"
+  "jei.create_tacz.military_factory_bullets": "军工厂：子弹",
+  "create_tacz.ponder.bullet_factory_1.header": "手工制造弹药",
+  "create_tacz.ponder.bullet_factory_1.text_1": "子弹可通过弹药装配台制作",
+  "create_tacz.ponder.bullet_factory_1.text_2": "但弹药装配台无法接入自动化产线",
+  "create_tacz.ponder.bullet_factory_1.text_3": "只能手动制造弹药",
+  "create_tacz.ponder.bullet_factory_1.text_4": "这是一种极其不健康的行为",
+  "create_tacz.ponder.bullet_factory_2.header": "自动化制造弹药",
+  "create_tacz.ponder.bullet_factory_2.text_1": "为子弹工厂通入应力",
+  "create_tacz.ponder.bullet_factory_2.text_2": "且转速应不低于16RPM",
+  "create_tacz.ponder.bullet_factory_2.text_3": "放入列表过滤器",
+  "create_tacz.ponder.bullet_factory_2.text_4": "将想要制造的子弹（限一种）放入列表过滤器",
+  "create_tacz.ponder.bullet_factory_2.text_5": "记得选择白名单和匹配物品属性",
+  "create_tacz.ponder.bullet_factory_2.text_6": "子弹工厂可自动从相邻的容器内抽取原料制造子弹",
+  "create_tacz.ponder.bullet_factory_2.text_7": "子弹制造速度与转速有关",
+  "create_tacz.ponder.bullet_factory_2.text_8": "256RPM下5秒即可制造出一批子弹",
+  "create_tacz.ponder.bullet_factory_2.text_9": "制造出的子弹可以通过漏斗等物流手段取出"
 }
