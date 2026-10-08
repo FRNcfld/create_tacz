@@ -7,23 +7,24 @@ import java.util.List;
 import java.util.Map;
 
 import com.frnc.create_tacz.Config;
-import com.frnc.create_tacz.registry.ModBlockEntities;
+import com.frnc.create_tacz.CreateTacz;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.content.logistics.filter.FilterItemStack;
+import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
-import com.simibubi.create.content.logistics.filter.FilterItemStack;
-import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.item.SmartInventory;
-import com.simibubi.create.foundation.utility.CreateLang;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModRecipe;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
+import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.lang.Lang;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -36,6 +37,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
@@ -68,8 +70,9 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     /**
      * 最低工作转速，硬门槛 —— 低于它机器停机。
      *
-     * <p>方块那边 {@code getMinimumRequiredSpeedLevel()} 只能从 Create 的
-     * NONE/SLOW(10)/MEDIUM(20)/FAST(30) 四档里选，表达不了 16，所以真正的门槛在这里。
+     * <p>方块那边 {@code getMinimumRequiredSpeedLevel()} 只能从 Create 的四档里选，
+     * 而四档的<b>实际转速是</b> NONE=0、SLOW=1（硬编码）、MEDIUM/FAST 取自 Create 服务端配置 ——
+     * 都表达不了 16，所以真正的门槛在这里。
      */
     private static final float MIN_SPEED = 16f;
 
@@ -89,6 +92,21 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
      * 无论第三方枪包的批量多大都不会停机。
      */
     private static final int OUTPUT_SLOTS = 9;
+
+    /**
+     * 玻璃罩里那发子弹的展示转速：4 RPM，约 15 秒一圈。
+     *
+     * <p>与加工无关 —— <b>转不转只看有没有动力，转多快跟动力大小无关</b>。
+     */
+    private static final float SPIN_RPM = 4.0f;
+
+    /**
+     * 每游戏刻转过的角度。
+     *
+     * <p>1 RPM = 6 度/秒，所以 4 RPM = 24 度/秒；一游戏刻是 1/20 秒，即 1.2 度/刻。
+     * 对着一发约 2.4 格宽的子弹，1.2 度只让边缘移动约 0.05 格，肉眼看不出是一格一格走的。
+     */
+    private static final float DEGREES_PER_TICK = SPIN_RPM * 6.0f / 20.0f;
 
     private FilteringBehaviour filter;
 
@@ -112,12 +130,34 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     private GunSmithTableRecipe lockedRecipe;
     private boolean lockedRecipeResolved;
 
-    /** 剩余加工 tick；-1 表示未在加工。 */
-    private int processingTicks = -1;
+    /**
+     * 剩余加工 tick；0 表示未在加工（Create 机器一律用这个惯例，比如 Millstone 的 timer）。
+     *
+     * <p>启动时 {@code getProcessingTicks()} 保证返回值至少是 1，所以 0 不会被误当成"正在加工"。
+     */
+    private int timer;
 
-    public MilitaryFactoryBulletsBlockEntity(BlockPos pos, BlockState state)
+    /**
+     * 展示用旋转角度（度），<b>仅客户端</b>，不写 NBT 也不同步。
+     *
+     * <p>为什么不放在 visual 里：Flywheel 的 visual 会在区块重渲、资源重载等时机被销毁重建，
+     * 实例字段会归零，表现就是子弹突然跳回起点。放在方块实体上还能让
+     * {@code MilitaryFactoryRenderer} 在 Flywheel 关闭时读到<b>同一个</b>角度 ——
+     * 否则开关 Flywheel 会看到两种不同的转速。
+     */
+    private float renderAngle;
+
+    /**
+     * 构造器必须接受 {@code type} —— Registrate 的 {@code BlockEntityFactory<T>} 签名是
+     * {@code (BlockEntityType<T>, BlockPos, BlockState)}，它会把注册好的类型传进来。
+     * Create 的机器 BE 全都是这个写法（见 {@code MillstoneBlockEntity}、{@code SawBlockEntity}）。
+     *
+     * <p>顺带一个好处：不再需要在这里反向去取 {@code ModBlockEntities.XXX.get()}，
+     * 少了一条潜在的初始化顺序依赖。
+     */
+    public MilitaryFactoryBulletsBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state)
     {
-        super(ModBlockEntities.MILITARY_FACTORY_BULLETS.get(), pos, state);
+        super(type, pos, state);
 
         outputInventory = new SmartInventory(OUTPUT_SLOTS, this, 64, true)
                 .forbidInsertion();
@@ -144,15 +184,20 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side)
     {
-        if (cap == ForgeCapabilities.ITEM_HANDLER)
+        if (isItemHandlerCap(cap))
             return itemCapability.cast();
         return super.getCapability(cap, side);
     }
 
+    /**
+     * 覆写 Create 的 {@code invalidate()}（不是 Forge 的 {@code invalidateCaps()}）——
+     * 这是 SmartBlockEntity 体系里释放 {@code LazyOptional} 的惯例位置，
+     * 由 {@code setRemoved()} 调用，方块被拆和区块卸载两条路径都会走到。
+     */
     @Override
-    public void invalidateCaps()
+    public void invalidate()
     {
-        super.invalidateCaps();
+        super.invalidate();
         itemCapability.invalidate();
     }
 
@@ -210,8 +255,18 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     {
         super.tick();
 
-        if (level == null || level.isClientSide())
+        if (level == null)
             return;
+
+        // 展示角度只在客户端累计：它是纯视觉量。
+        // 累计必须在这里（每刻都会走的钩子），不能放到 visual 的 update() ——
+        // Flywheel 的 update() 只在视觉对象被创建或显式排队时调用，不是周期钩子。
+        if (level.isClientSide())
+        {
+            if (isDisplaySpinning())
+                renderAngle = (renderAngle + DEGREES_PER_TICK) % 360f;
+            return;
+        }
 
         // 先把积压的产出冲进输出格。冲不完说明下游堵了，这一 tick 就不再开新的一批。
         flushPendingOutput();
@@ -238,14 +293,14 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
             return;
         }
 
-        if (processingTicks < 0)
+        if (timer == 0)
         {
-            processingTicks = getProcessingTicks(speed);
+            timer = getProcessingTicks(speed);
             sendData();
             return;
         }
 
-        if (--processingTicks <= 0)
+        if (--timer <= 0)
         {
             // 到点重新规划再执行，保证扣除的和当初校验的是同一批槽位
             List<Extraction> finalPlan = planExtraction(recipe);
@@ -254,18 +309,40 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
                 executeExtraction(finalPlan);
                 produce(recipe);
             }
-            processingTicks = -1;
+            timer = 0;
             sendData();
         }
     }
 
     /**
+     * 展示组当前是否应该旋转：接上传动杆、有转速、而且没过载。
+     *
+     * <p>判据用 {@code getSpeed() != 0} 而不是加工用的 {@link #MIN_SPEED}：
+     * 那 16 RPM 是"够不够加工"的门槛，而这里的子弹只是挂在这根输入轴上，轴转它就转。
+     */
+    public boolean isDisplaySpinning()
+    {
+        return getSpeed() != 0f && !isOverStressed();
+    }
+
+    /** 展示角度（度）。visual 与渲染器回退共用这一个来源。 */
+    public float getRenderAngle()
+    {
+        return renderAngle;
+    }
+
+    /**
      * 护目镜提示。
      *
-     * <p>super 现在只剩过载警告会触发 —— 它的"转速不够"分支因为方块那边
+     * <p>这里的<b>写法遵循 Create 的约定</b>：{@code super.addToTooltip} 的返回值含义是
+     * "我已经写过提示了"（过载、或转速不达标）。它返回 true 时必须直接收手，
+     * 否则会出现"过载"和"转速不够"同屏显示、互相矛盾的情况 —— 过载时机器是停的，
+     * 再说它转速不够纯属误导。
+     *
+     * <p>super 现在只剩过载分支会触发：它的"转速不够"分支因为方块那边
      * {@code getMinimumRequiredSpeedLevel()} 返回 NONE 而永远不会走到
      * （{@code isSpeedRequirementFulfilled()} 恒为 true）。Create 那行只说"转速不够"，
-     * 说不出到底要多少，这里换成带具体数字的版本。
+     * 说不出到底要多少，所以下面换成带具体数字的版本。
      *
      * <p>只在"有转速但不够"时提示。转速为 0 时不提示 —— 要么没接动力、要么被过载压停，
      * 那两种情况都有更合适的提示（或玩家自己看得见），再堆一句"需要 16 RPM"是噪音。
@@ -273,29 +350,30 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     @Override
     public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking)
     {
-        boolean added = super.addToTooltip(tooltip, isPlayerSneaking);
+        if (super.addToTooltip(tooltip, isPlayerSneaking))
+            return true;
 
         float speed = Math.abs(getSpeed());
         if (speed > 0 && speed < MIN_SPEED)
         {
-            // 这里不能用 CreateLang.translate(...) —— 它的 namespace 固定是 "create"，
-            // 内部会拼成 namespace + "." + langKey，我们的键会被翻成
-            // create.gui.create_tacz.speed_too_low，界面上就直接显示原始键名。
-            // 用 CreateLang.builder() 只是为了复用它的 forGoggles 缩进排版。
-            CreateLang.builder()
-                    .add(Component.translatable("gui.create_tacz.speed_too_low", (int) MIN_SPEED, (int) speed))
+            // 用 catnip 的 Lang 而不是 CreateLang —— CreateLang 的 namespace 硬编码成 "create"，
+            // 内部会拼成 create.<key>，我们的键会被翻成 create.gui.speed_too_low，
+            // 界面上就直接显示原始键名了。
+            // 用 Lang.builder(MOD_ID) 才会拼成 create_tacz.gui.speed_too_low。
+            Lang.builder(CreateTacz.MOD_ID)
+                    .translate("gui.speed_too_low", (int) MIN_SPEED, (int) speed)
                     .style(ChatFormatting.GOLD)
                     .forGoggles(tooltip);
-            added = true;
+            return true;
         }
-        return added;
+        return false;
     }
 
     private void stopProcessing()
     {
-        if (processingTicks != -1)
+        if (timer != 0)
         {
-            processingTicks = -1;
+            timer = 0;
             sendData();
         }
     }
@@ -326,8 +404,8 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
      * 列表过滤器锁定哪些子弹，就找产出匹配的配方。没设滤波则不工作。
      *
      * <h2>为什么滤波槽收列表过滤器而不是裸弹药</h2>
-     * TaCZ 的<b>所有口径共用同一个物品</b> {@code tacz:ammo}（见 {@code ModItems}，只有
-     * {@code AMMO} 一项），口径存在 NBT 里。而 Create 判断单个物品式滤波走的是
+     * TaCZ 的<b>所有口径共用同一个物品</b> {@code tacz:ammo}（TaCZ 自己的 {@code ModItems}
+     * 里只有 {@code AMMO} 一项），口径存在 NBT 里。而 Create 判断单个物品式滤波走的是
      * {@code FilterItem.testDirect -> ItemHelper.sameItem}，<b>只比物品类型、忽略 NBT</b> ——
      * 于是任何口径的滤波都会命中配方表里的第一条弹药配方（表现为"只有 9mm 能造"）。
      *
@@ -370,8 +448,8 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
      * 会忽略调用方传进去的 matchNBT 参数，所以这里传什么都不影响结果。）
      *
      * <p><b>RespectNBT 关闭时的后果需要知道</b>：匹配会退化成只比物品类型，而 TaCZ 的所有
-     * 口径共用同一个物品 {@code tacz:ammo}（见 {@code ModItems}），于是列表里放的到底是哪个
-     * 口径就不起作用了，机器会一直做配方表里的第一条弹药配方。
+     * 口径共用同一个物品 {@code tacz:ammo}，于是列表里放的到底是哪个口径就不起作用了，
+     * 机器会一直做配方表里的第一条弹药配方。
      * 症状是"我明明指定了 A 口径，它却一直在造 B" —— 先检查滤镜的 RespectNBT 开关。
      */
     private boolean matchesFilter(FilterItemStack parsed, ItemStack result)
@@ -407,12 +485,20 @@ public class MilitaryFactoryBulletsBlockEntity extends KineticBlockEntity
     /** 一次原料抽取动作：从哪个容器的哪个槽拿多少。 */
     private record Extraction(IItemHandler inventory, int slot, int amount) {}
 
-    /** 相邻六个面的容器，只要提供 IItemHandler 就算。 */
+    /**
+     * 相邻六个面的容器，只要提供 IItemHandler 就算。
+     *
+     * <p>用 catnip 的 {@code Iterate.directions} 而不是 {@code Direction.values()}：
+     * 前者是复用的常量数组，后者每次调用都分配一个新数组。
+     *
+     * <p>Create 没有现成的"遍历相邻容器"工具（既没有 getAdjacentInventories 也没有
+     * InventoryManipulation），它自己也是像下面这样直接走 Forge capability 的。
+     */
     private List<IItemHandler> getAdjacentInventories()
     {
         List<IItemHandler> inventories = new ArrayList<>(6);
 
-        for (Direction direction : Direction.values())
+        for (Direction direction : Iterate.directions)
         {
             BlockEntity neighbour = level.getBlockEntity(worldPosition.relative(direction));
             if (neighbour == null)

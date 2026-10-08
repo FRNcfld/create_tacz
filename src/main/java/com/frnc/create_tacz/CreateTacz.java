@@ -2,9 +2,10 @@ package com.frnc.create_tacz;
 
 import com.frnc.create_tacz.registry.ModBlockEntities;
 import com.frnc.create_tacz.registry.ModBlocks;
-import com.frnc.create_tacz.registry.ModItems;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.api.stress.BlockStressValues;
+import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.tacz.guns.init.ModCreativeTabs;
 
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -21,16 +22,27 @@ public class CreateTacz
     // Define mod id in a common place for everything to reference
     public static final String MOD_ID = "create_tacz";
 
+    /**
+     * 本模组的 Registrate 实例，全部内容都从这里注册。
+     *
+     * <p>附属模组<b>只能</b>用这个工厂方法创建：{@code Create.registrate()} 带调用方包名校验，
+     * 非 {@code com.simibubi.create} 包调用会直接抛 {@code UnsupportedOperationException}。
+     */
+    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MOD_ID);
+
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public CreateTacz(FMLJavaModLoadingContext context)
     {
-        // 后续的 DeferredRegister 一律注册到 context.getModEventBus()
         IEventBus modEventBus = context.getModEventBus();
 
-        ModBlocks.BLOCKS.register(modEventBus);
-        ModItems.ITEMS.register(modEventBus);
-        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        // 必须显式接上事件总线，否则 Registrate 注册的任何东西都不会进注册表。
+        REGISTRATE.registerEventListeners(modEventBus);
+
+        // 注册链写在静态字段的初始化表达式里，而静态字段是惰性初始化的 ——
+        // 不主动触碰这些类，它们就永远不会初始化，方块与方块实体一个都不会注册。
+        ModBlocks.register();
+        ModBlockEntities.register();
 
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
@@ -54,20 +66,23 @@ public class CreateTacz
     private static void addToTaczCreativeTab(BuildCreativeModeTabContentsEvent event)
     {
         if (event.getTabKey()
-                .equals(com.tacz.guns.init.ModCreativeTabs.OTHER_TAB.getKey()))
-            event.accept(ModItems.MILITARY_FACTORY_BULLETS);
+                .equals(ModCreativeTabs.OTHER_TAB.getKey()))
+            event.accept(ModBlocks.MILITARY_FACTORY_BULLETS.get());
     }
 
     /**
      * 应力消耗必须在 FMLCommonSetupEvent 里登记，不能放在构造器 ——
-     * 那时 Forge 的注册表还没填充，ModBlocks.MILITARY_FACTORY_BULLETS.get() 拿不到实例。
+     * 那时 Forge 的注册表还没填充，{@code ModBlocks.MILITARY_FACTORY_BULLETS.get()} 拿不到实例。
      *
-     * <p>Create 的 BlockStressValues.IMPACTS 是普通显式注册表，get() 会先查显式注册
-     * 再看缓存值，所以这里晚注册依然生效。正数表示"消耗"，单位是每 RPM。
+     * <p>{@code BlockStressValues.IMPACTS} 是附属模组唯一公开且稳定的应力入口：
+     * Create 自己的 {@code CStress} 带 {@code assertFromCreate} 校验，非 Create 方块会抛异常。
+     * 值是 1 RPM 下的基础消耗，正数表示"消耗"。
+     *
+     * <p>SimpleRegistry 本身就是线程安全的（它的类注释明确写了可在并行 mod init 中使用），
+     * 所以不需要再包一层 {@code event.enqueueWork}。
      */
     private void commonSetup(FMLCommonSetupEvent event)
     {
-        event.enqueueWork(() -> BlockStressValues.IMPACTS.register(
-                ModBlocks.MILITARY_FACTORY_BULLETS.get(), () -> 8.0));
+        BlockStressValues.IMPACTS.register(ModBlocks.MILITARY_FACTORY_BULLETS.get(), () -> 8.0);
     }
 }
